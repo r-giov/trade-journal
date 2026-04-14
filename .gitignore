@@ -1,0 +1,19 @@
+# build output
+dist/
+dist-ssr/
+
+# dependencies
+node_modules/
+
+# env files
+.env
+.env.local
+.env.production
+
+# editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
