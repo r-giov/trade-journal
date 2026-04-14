@@ -74,7 +74,8 @@ export function parseCSV(text) {
   let headerIdx = -1
   for (let i = 0; i < Math.min(lines.length, 10); i++) {
     const l = lines[i].toLowerCase()
-    if (l.includes('symbol') && l.includes('direction') || 
+    if (l.includes('symbol') && l.includes('direction') ||
+        l.includes('symbol') && l.includes('action') ||
         l.includes('symbol') && l.includes('type') && l.includes('profit') ||
         l.includes('position') && l.includes('symbol')) {
       headerIdx = i; break
@@ -91,7 +92,7 @@ export function parseCSV(text) {
       closeTime:  ['exittime','close time','close_time','closetime'],
       ticket:     ['tradeid','ticket','position','order','id'],
       symbol:     ['symbol','instrument','pair'],
-      type:       ['direction','type'],
+      type:       ['direction','type','action'],
       volume:     ['volume','size','lots','vol'],
       openPrice:  ['entryprice','open price','open_price','price','openprice'],
       closePrice: ['exitprice','close price','close_price','closeprice'],
