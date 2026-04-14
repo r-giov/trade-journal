@@ -20,8 +20,9 @@ export function parseMT5Report(rawText) {
     const cells = row.querySelectorAll('td')
     const vals = Array.from(cells).map(c => c.textContent.trim())
     if (cells.length === 15 && /^\d{4}\.\d{2}\.\d{2}/.test(vals[0])) {
-      if (vals[3]?.toLowerCase() === 'balance') return
-      deals.push({ time: vals[0], symbol: vals[2], type: vals[3]?.toLowerCase(), direction: vals[4]?.toLowerCase(), volume: cleanNum(vals[5]), price: cleanNum(vals[6]), orderId: vals[7], profit: cleanNum(vals[12]) || cleanNum(vals[11]) })
+      const type = vals[3]?.toLowerCase()
+      if (type === 'balance') return
+      deals.push({ time: vals[0], symbol: vals[2], type, direction: vals[4]?.toLowerCase(), volume: cleanNum(vals[5]), price: cleanNum(vals[6]), orderId: vals[7], profit: cleanNum(vals[12]) || cleanNum(vals[11]) })
     }
     if (cells.length === 14 && /^\d{4}\.\d{2}\.\d{2}/.test(vals[0])) {
       const type = vals[3]?.toLowerCase()
@@ -59,10 +60,10 @@ export function parseCSV(text) {
 
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i].toLowerCase()
-    if ((l.startsWith('time,position') || l.startsWith('"time","position"')) && l.includes('profit')) {
+    if ((l.startsWith('time,position') || l.startsWith('"time","position"') || l.startsWith('time,ticket') || l.startsWith('open time')) && l.includes('symbol') && l.includes('type')) {
       headerIdx = i
     }
-    if (headerIdx !== -1 && i > headerIdx && (l.startsWith('open time,order') || l.startsWith('time,deal') || l.startsWith('"open time"') || l.startsWith('"time","deal"'))) {
+    if (headerIdx !== -1 && i > headerIdx && (l.startsWith('open time,order') || l.startsWith('time,deal') || l.startsWith('time,order'))) {
       endIdx = i
       break
     }
@@ -71,13 +72,29 @@ export function parseCSV(text) {
   if (headerIdx === -1) {
     for (let i = 0; i < lines.length; i++) {
       const l = lines[i].toLowerCase()
-      if (l.includes('time') && l.includes('symbol') && l.includes('type') && l.includes('profit')) {
+      if (l.includes('time') && l.includes('symbol') && l.includes('type') && (l.includes('profit') || l.includes('p&l'))) {
         headerIdx = i
         break
       }
     }
   }
+
   if (headerIdx === -1) return []
+
+  const headerVals = lines[headerIdx].toLowerCase().split(',').map(v => v.trim().replace(/"/g,''))
+  const colIdx = {
+    openTime: headerVals.findIndex(h => h === 'time' || h === 'open time'),
+    ticket: headerVals.findIndex(h => h === 'position' || h === 'ticket' || h === 'order'),
+    symbol: headerVals.findIndex(h => h === 'symbol'),
+    type: headerVals.findIndex(h => h === 'type'),
+    volume: headerVals.findIndex(h => h === 'volume'),
+    openPrice: headerVals.findIndex(h => h === 'price' || h === 'open price'),
+    sl: headerVals.findIndex(h => h === 's / l' || h === 'sl' || h === 's/l'),
+    tp: headerVals.findIndex(h => h === 't / p' || h === 'tp' || h === 't/p'),
+    closeTime: headerVals.lastIndexOf('time') !== headerVals.indexOf('time') ? headerVals.lastIndexOf('time') : headerVals.findIndex(h => h === 'close time'),
+    closePrice: headerVals.lastIndexOf('price') !== headerVals.indexOf('price') ? headerVals.lastIndexOf('price') : -1,
+    profit: headerVals.findIndex(h => h === 'profit' || h === 'p&l' || h === 'net profit'),
+  }
 
   const trades = []
   const seen = new Set()
@@ -86,16 +103,35 @@ export function parseCSV(text) {
     const line = lines[i]
     if (!line || !(/^\d{4}/.test(line))) continue
     const vals = line.split(',').map(v => v.trim().replace(/"/g, ''))
-    if (vals.length < 9) continue
-    const type = vals[3]?.toLowerCase()
-    if (!['buy', 'sell'].includes(type)) continue
-    const closeTime = vals[8] || ''
+    if (vals.length < 5) continue
+
+    const type = (colIdx.type >= 0 ? vals[colIdx.type] : '').toLowerCase()
+    if (!['buy','sell'].includes(type)) continue
+
+    const closeTime = colIdx.closeTime >= 0 ? vals[colIdx.closeTime] : ''
     if (!closeTime || !/^\d{4}/.test(closeTime)) continue
-    const profit = cleanNum(vals[12])
-    const id = `csv-${vals[1]}-${vals[0].replace(/[\s:.]/g,'')}`
+
+    const openTime = colIdx.openTime >= 0 ? vals[colIdx.openTime] : vals[0]
+    const ticket = colIdx.ticket >= 0 ? vals[colIdx.ticket] : vals[1]
+    const profit = colIdx.profit >= 0 ? cleanNum(vals[colIdx.profit]) : cleanNum(vals[vals.length - 3])
+
+    const id = `csv-${ticket}-${openTime.replace(/[\s:.]/g,'')}`
     if (seen.has(id)) continue
     seen.add(id)
-    trades.push({ id, openTime: vals[0], ticket: vals[1], type, volume: cleanNum(vals[4]), symbol: vals[2], openPrice: cleanNum(vals[5]), sl: vals[6] || '', tp: vals[7] || '', closeTime, closePrice: cleanNum(vals[9]), profit, outcome: profit > 0.5 ? 'win' : profit < -0.5 ? 'loss' : 'be' })
+
+    trades.push({
+      id, openTime, ticket, type,
+      volume: colIdx.volume >= 0 ? cleanNum(vals[colIdx.volume]) : 0,
+      symbol: colIdx.symbol >= 0 ? vals[colIdx.symbol] : '',
+      openPrice: colIdx.openPrice >= 0 ? cleanNum(vals[colIdx.openPrice]) : 0,
+      sl: colIdx.sl >= 0 ? vals[colIdx.sl] : '',
+      tp: colIdx.tp >= 0 ? vals[colIdx.tp] : '',
+      closeTime,
+      closePrice: colIdx.closePrice >= 0 ? cleanNum(vals[colIdx.closePrice]) : 0,
+      profit,
+      outcome: profit > 0.5 ? 'win' : profit < -0.5 ? 'loss' : 'be',
+    })
   }
+
   return trades.sort((a, b) => a.openTime.localeCompare(b.openTime))
 }
