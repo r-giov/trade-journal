@@ -20,12 +20,12 @@ export default function Session({ sessions, trades, onSave }) {
   const today = new Date().toISOString().slice(0, 10)
   const existing = sessions.find(s => s.date === today) || {}
 
-  const [preEmo, setPreEmo] = useState(existing.pre_emotion || '')
-  const [preNotes, setPreNotes] = useState(existing.pre_notes || '')
-  const [postEmo, setPostEmo] = useState(existing.post_emotion || '')
-  const [postNotes, setPostNotes] = useState(existing.post_notes || '')
-  const [followedPlan, setFollowedPlan] = useState(existing.followed_plan || '')
-  const [grade, setGrade] = useState(existing.overall_grade || '')
+  const [preEmo, setPreEmo] = useState(existing.preEmotion || '')
+  const [preNotes, setPreNotes] = useState(existing.preNotes || '')
+  const [postEmo, setPostEmo] = useState(existing.postEmotion || '')
+  const [postNotes, setPostNotes] = useState(existing.postNotes || '')
+  const [followedPlan, setFollowedPlan] = useState(existing.followedPlan || '')
+  const [grade, setGrade] = useState(existing.overallGrade || '')
   const [checks, setChecks] = useState({})
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -147,27 +147,27 @@ export default function Session({ sessions, trades, onSave }) {
           {sessions.slice(0, 7).map(s => (
             <div key={s.date} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
               <span style={{ fontSize: 11, color: 'var(--text3)', width: 90, flexShrink: 0 }}>{s.date}</span>
-              {s.pre_emotion && (
-                <span style={{ fontSize: 11, color: EMO_COLORS[s.pre_emotion] || 'var(--text3)', background: (EMO_COLORS[s.pre_emotion] || '#888') + '15', padding: '2px 8px', borderRadius: 100 }}>
-                  {s.pre_emotion}
+              {s.preEmotion && (
+                <span style={{ fontSize: 11, color: EMO_COLORS[s.preEmotion] || 'var(--text3)', background: (EMO_COLORS[s.preEmotion] || '#888') + '15', padding: '2px 8px', borderRadius: 100 }}>
+                  {s.preEmotion}
                 </span>
               )}
-              {s.post_emotion && (
+              {s.postEmotion && (
                 <>
                   <span style={{ fontSize: 10, color: 'var(--text3)' }}>to</span>
-                  <span style={{ fontSize: 11, color: EMO_COLORS[s.post_emotion] || 'var(--text3)', background: (EMO_COLORS[s.post_emotion] || '#888') + '15', padding: '2px 8px', borderRadius: 100 }}>
-                    {s.post_emotion}
+                  <span style={{ fontSize: 11, color: EMO_COLORS[s.postEmotion] || 'var(--text3)', background: (EMO_COLORS[s.postEmotion] || '#888') + '15', padding: '2px 8px', borderRadius: 100 }}>
+                    {s.postEmotion}
                   </span>
                 </>
               )}
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
-                {s.followed_plan && (
-                  <span style={{ fontSize: 10, color: s.followed_plan === 'yes' ? 'var(--green)' : s.followed_plan === 'no' ? 'var(--red)' : 'var(--amber)' }}>
-                    plan: {s.followed_plan}
+                {s.followedPlan && (
+                  <span style={{ fontSize: 10, color: s.followedPlan === 'yes' ? 'var(--green)' : s.followedPlan === 'no' ? 'var(--red)' : 'var(--amber)' }}>
+                    plan: {s.followedPlan}
                   </span>
                 )}
-                {s.overall_grade && (
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent)', background: 'var(--accent-bg)', padding: '1px 8px', borderRadius: 6 }}>{s.overall_grade}</span>
+                {s.overallGrade && (
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent)', background: 'var(--accent-bg)', padding: '1px 8px', borderRadius: 6 }}>{s.overallGrade}</span>
                 )}
               </div>
             </div>
