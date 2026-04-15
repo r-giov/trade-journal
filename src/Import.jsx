@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { parseMT5Report, parseCSV } from './store'
 
-export default function Import({ onImport, batches = [], onDeleteBatch }) {
+export default function Import({ onImport, batches = [], onDeleteBatch, onDeleteAllBatches }) {
   const [dragging, setDragging] = useState(false)
   const [preview, setPreview] = useState(null)
   const [parsing, setParsing] = useState(false)
@@ -11,6 +11,7 @@ export default function Import({ onImport, batches = [], onDeleteBatch }) {
   const [mode, setMode] = useState('merge')
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
   const fileRef = useRef()
   const nav = useNavigate()
 
@@ -179,7 +180,19 @@ export default function Import({ onImport, batches = [], onDeleteBatch }) {
       {/* Import history / batches */}
       {batches.length > 0 && (
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--r2)', padding: 20, marginBottom: 20 }}>
-          <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.08em', marginBottom: 14 }}>IMPORT HISTORY</div>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 14 }}>
+            <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.08em', flex: 1 }}>IMPORT HISTORY</div>
+            <button onClick={() => setConfirmDeleteAll(true)} style={{ fontSize: 11, padding: '4px 12px', borderRadius: 'var(--r)', background: 'var(--red-bg)', border: '1px solid var(--red-border)', color: 'var(--red)', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>
+              clear all history
+            </button>
+          </div>
+          {confirmDeleteAll && (
+            <div style={{ background: 'var(--red-bg)', border: '1px solid var(--red-border)', borderRadius: 'var(--r)', padding: '12px 14px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 12, color: 'var(--red)', flex: 1 }}>Delete all {batches.length} batches and all associated trades?</span>
+              <button onClick={async () => { await onDeleteAllBatches(); setConfirmDeleteAll(false) }} style={{ padding: '5px 12px', borderRadius: 'var(--r)', fontSize: 11, background: 'var(--red)', color: '#fff', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>yes, clear all</button>
+              <button onClick={() => setConfirmDeleteAll(false)} style={{ padding: '5px 12px', borderRadius: 'var(--r)', fontSize: 11, background: 'transparent', color: 'var(--text2)', border: '1px solid var(--border2)', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>cancel</button>
+            </div>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {batches.map(b => (
               <div key={b.id}>

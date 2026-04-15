@@ -4,7 +4,7 @@ import { supabase } from './supabase'
 import {
   getTrades, getJournalEntries, upsertTrades, upsertJournalEntry,
   upsertSession, getSessions, deleteTrade, deleteAllTrades,
-  getImportBatches, createImportBatch, deleteImportBatch,
+  getImportBatches, createImportBatch, deleteImportBatch, deleteAllBatches,
 } from './api'
 import Auth from './Auth'
 import Nav from './Nav'
@@ -110,6 +110,14 @@ function AppInner() {
     toast(`Batch deleted — ${batch?.trade_count ?? ''} trades removed`, 'info')
   }
 
+  async function handleDeleteAllBatches() {
+    await deleteAllBatches(user.id)
+    setTrades([])
+    setJournalEntries({})
+    setBatches([])
+    toast('All import history cleared', 'info')
+  }
+
   async function handleJournalUpdate(tradeId, entry) {
     setJournalEntries(prev => ({ ...prev, [tradeId]: entry }))
     await upsertJournalEntry(tradeId, user.id, entry)
@@ -153,7 +161,7 @@ function AppInner() {
       )}
       <Routes>
         <Route path="/" element={<Dashboard trades={trades} journalEntries={journalEntries} sessions={sessions} />} />
-        <Route path="/import" element={<Import onImport={handleImport} batches={batches} onDeleteBatch={handleDeleteBatch} />} />
+        <Route path="/import" element={<Import onImport={handleImport} batches={batches} onDeleteBatch={handleDeleteBatch} onDeleteAllBatches={handleDeleteAllBatches} />} />
         <Route path="/trades" element={<Trades trades={trades} journalEntries={journalEntries} onJournalUpdate={handleJournalUpdate} onDeleteTrade={handleDeleteTrade} onDeleteAll={handleDeleteAll} />} />
         <Route path="/analytics" element={<Analytics trades={trades} journalEntries={journalEntries} sessions={sessions} />} />
         <Route path="/session" element={<Session sessions={sessions} trades={trades} onSave={handleSessionSave} />} />

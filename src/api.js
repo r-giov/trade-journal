@@ -63,6 +63,12 @@ export async function deleteImportBatch(batchId, userId) {
   if (error) throw error
 }
 
+export async function deleteAllBatches(userId) {
+  await supabase.from('trades').delete().eq('user_id', userId)
+  const { error } = await supabase.from('import_batches').delete().eq('user_id', userId)
+  if (error) throw error
+}
+
 // Journal entries
 
 export async function getJournalEntries(userId) {
