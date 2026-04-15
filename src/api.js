@@ -99,7 +99,15 @@ export async function upsertJournalEntry(tradeId, userId, entry) {
 export async function getSessions(userId) {
   const { data, error } = await supabase.from('sessions').select('*').eq('user_id', userId).order('date', { ascending: false })
   if (error) throw error
-  return data
+  return data.map(s => ({
+    date: s.date,
+    preEmotion: s.pre_emotion,
+    preNotes: s.pre_notes,
+    postEmotion: s.post_emotion,
+    postNotes: s.post_notes,
+    followedPlan: s.followed_plan,
+    overallGrade: s.overall_grade,
+  }))
 }
 
 export async function upsertSession(userId, session) {
