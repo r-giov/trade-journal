@@ -90,7 +90,7 @@ export function parseCSV(text) {
     const aliases = {
       openTime:   ['entrytime','open time','open_time','time','opentime'],
       closeTime:  ['exittime','close time','close_time','closetime'],
-      ticket:     ['tradeid','ticket','position','order','id'],
+      ticket:     ['tradeid','ticket','positionid','position_id','position','order','id'],
       symbol:     ['symbol','instrument','pair'],
       type:       ['direction','type','action'],
       volume:     ['volume','size','lots','vol'],
