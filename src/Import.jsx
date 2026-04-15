@@ -5,6 +5,8 @@ import { parseMT5Report, parseCSV } from './store'
 export default function Import({ onImport, batches = [], onDeleteBatch }) {
   const [dragging, setDragging] = useState(false)
   const [preview, setPreview] = useState(null)
+  const [parsing, setParsing] = useState(false)
+  const [importing, setImporting] = useState(false)
   const [error, setError] = useState('')
   const [mode, setMode] = useState('merge')
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -14,20 +16,26 @@ export default function Import({ onImport, batches = [], onDeleteBatch }) {
 
   async function processFile(file) {
     setError('')
-    const text = await file.text()
-    let trades = []
+    setPreview(null)
+    setParsing(true)
+    try {
+      const text = await file.text()
+      let trades = []
 
-    if (file.name.endsWith('.html') || file.name.endsWith('.htm') || text.includes('<table') || text.includes('<TABLE')) {
-      trades = parseMT5Report(text)
-    } else if (file.name.endsWith('.csv') || text.includes(',')) {
-      trades = parseCSV(text)
-    }
+      if (file.name.endsWith('.html') || file.name.endsWith('.htm') || text.includes('<table') || text.includes('<TABLE')) {
+        trades = parseMT5Report(text)
+      } else if (file.name.endsWith('.csv') || text.includes(',')) {
+        trades = parseCSV(text)
+      }
 
-    if (!trades.length) {
-      setError('Could not parse any trades. Make sure this is an MT5 HTML report or CSV export.')
-      return
+      if (!trades.length) {
+        setError('Could not parse any trades. Make sure this is an MT5 HTML report or CSV export.')
+        return
+      }
+      setPreview({ trades, filename: file.name })
+    } finally {
+      setParsing(false)
     }
-    setPreview({ trades, filename: file.name })
   }
 
   function handleDrop(e) {
@@ -44,8 +52,13 @@ export default function Import({ onImport, batches = [], onDeleteBatch }) {
 
   async function confirm() {
     if (!preview) return
-    await onImport(preview.trades, mode, preview.filename)
-    nav('/trades')
+    setImporting(true)
+    try {
+      await onImport(preview.trades, mode, preview.filename)
+      nav('/trades')
+    } finally {
+      setImporting(false)
+    }
   }
 
   async function handleDeleteBatch(batchId) {
@@ -82,9 +95,11 @@ export default function Import({ onImport, batches = [], onDeleteBatch }) {
         }}
       >
         <input ref={fileRef} type="file" accept=".html,.htm,.csv" onChange={handleFile} style={{ display: 'none' }} />
-        <div style={{ fontSize: 28, marginBottom: 12, color: 'var(--text3)' }}>+</div>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, marginBottom: 6 }}>Drop your MT5 report here</div>
-        <div style={{ color: 'var(--text3)', fontSize: 12 }}>HTML report or CSV — click to browse</div>
+        <div style={{ fontSize: 28, marginBottom: 12, color: 'var(--text3)' }}>{parsing ? '…' : '+'}</div>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, marginBottom: 6 }}>
+          {parsing ? 'Reading file...' : 'Drop your MT5 report here'}
+        </div>
+        <div style={{ color: 'var(--text3)', fontSize: 12 }}>{parsing ? 'Parsing trades' : 'HTML report or CSV — click to browse'}</div>
       </div>
 
       {error && (
@@ -98,7 +113,9 @@ export default function Import({ onImport, batches = [], onDeleteBatch }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600 }}>{preview.filename}</div>
-              <div style={{ color: 'var(--text3)', fontSize: 12 }}>{preview.trades.length} trades found</div>
+              <div style={{ color: 'var(--text3)', fontSize: 12, marginTop: 2 }}>
+                {preview.trades.length} trades · {preview.trades.filter(t=>t.outcome==='win').length}W / {preview.trades.filter(t=>t.outcome==='loss').length}L · net: <span style={{ color: preview.trades.reduce((s,t)=>s+t.profit,0) >= 0 ? 'var(--green)' : 'var(--red)', fontWeight:500 }}>{preview.trades.reduce((s,t)=>s+t.profit,0) >= 0 ? '+' : ''}{preview.trades.reduce((s,t)=>s+t.profit,0).toFixed(2)}</span>
+              </div>
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
               <span style={{ fontSize: 12, color: 'var(--green)' }}>+{preview.trades.filter(t => t.type === 'buy').length} buy</span>
@@ -145,12 +162,13 @@ export default function Import({ onImport, batches = [], onDeleteBatch }) {
             </table>
           </div>
 
-          <button onClick={confirm} style={{
+          <button onClick={confirm} disabled={importing} style={{
             width: '100%', padding: 12, borderRadius: 'var(--r)',
-            background: 'var(--accent)', color: '#fff',
-            fontFamily: 'var(--font-mono)', fontWeight: 500, fontSize: 13, border: 'none', cursor: 'pointer',
+            background: importing ? '#93c5fd' : 'var(--accent)', color: '#fff',
+            fontFamily: 'var(--font-mono)', fontWeight: 500, fontSize: 13, border: 'none',
+            cursor: importing ? 'not-allowed' : 'pointer', transition: 'background 0.15s',
           }}>
-            import {preview.trades.length} trades
+            {importing ? `importing ${preview.trades.length} trades...` : `import ${preview.trades.length} trades`}
           </button>
         </div>
       )}

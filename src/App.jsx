@@ -7,9 +7,11 @@ import Trades from './Trades'
 import Analytics from './Analytics'
 import Session from './Session'
 import * as store from './storage'
+import { ToastProvider, useToast } from './Toast'
 import './index.css'
 
-export default function App() {
+function AppInner() {
+  const toast = useToast()
   const [trades, setTrades] = useState(() => store.getTrades())
   const [journalEntries, setJournalEntries] = useState(() => store.getJournalEntries())
   const [sessions, setSessions] = useState(() => store.getSessions())
@@ -20,12 +22,15 @@ export default function App() {
     store.upsertTrades(newTrades, batch.id, mode)
     setTrades(store.getTrades())
     setBatches(store.getImportBatches())
+    toast(`${newTrades.length} trades imported from ${filename}`, 'success')
   }
 
   function handleDeleteBatch(batchId) {
+    const batch = batches.find(b => b.id === batchId)
     store.deleteImportBatch(batchId)
     setTrades(store.getTrades())
     setBatches(store.getImportBatches())
+    toast(`Batch deleted — ${batch?.trade_count ?? ''} trades removed`, 'info')
   }
 
   function handleJournalUpdate(tradeId, entry) {
@@ -36,6 +41,7 @@ export default function App() {
   function handleDeleteTrade(id) {
     store.deleteTrade(id)
     setTrades(prev => prev.filter(t => t.id !== id))
+    toast('Trade deleted', 'info')
   }
 
   function handleDeleteAll() {
@@ -43,11 +49,13 @@ export default function App() {
     setTrades([])
     setJournalEntries({})
     setBatches([])
+    toast('All trades deleted', 'info')
   }
 
   function handleSessionSave(session) {
     store.upsertSession(session)
     setSessions(store.getSessions())
+    toast('Session saved', 'success')
   }
 
   return (
@@ -62,5 +70,13 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
+  )
+}
+
+export default function App() {
+  return (
+    <ToastProvider>
+      <AppInner />
+    </ToastProvider>
   )
 }
