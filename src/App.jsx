@@ -92,6 +92,12 @@ function AppInner() {
     toast(`${newTrades.length} trades imported from ${filename}`, 'success')
   }
 
+  // exposed for debugging — remove later
+  window.__supabaseTest = async () => {
+    const { data, error } = await supabase.from('trades').select('id').limit(1)
+    console.log('Supabase test:', { data, error })
+  }
+
   async function handleDeleteBatch(batchId) {
     const batch = batches.find(b => b.id === batchId)
     await deleteImportBatch(batchId, user.id)

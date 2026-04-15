@@ -53,10 +53,13 @@ export default function Import({ onImport, batches = [], onDeleteBatch }) {
   async function confirm() {
     if (!preview) return
     setImporting(true)
+    setError('')
     try {
       await onImport(preview.trades, mode, preview.filename)
       nav('/trades')
-    } finally {
+    } catch (err) {
+      console.error(err)
+      setError(`Import failed: ${err?.message || err}`)
       setImporting(false)
     }
   }
