@@ -136,6 +136,14 @@ function AppInner() {
     toast('All trades deleted', 'info')
   }
 
+  function handleBalanceSynced(currentBalance, startingBalance) {
+    // Store starting balance for equity curve / drawdown calculations
+    if (startingBalance > 0) {
+      localStorage.setItem('tj_starting_balance', startingBalance)
+    }
+    toast(`MT5 balance synced: $${currentBalance.toFixed(2)}`, 'success')
+  }
+
   async function handleSessionSave(session) {
     await upsertSession(user.id, session)
     const updated = await getSessions(user.id)
@@ -161,7 +169,7 @@ function AppInner() {
       )}
       <Routes>
         <Route path="/" element={<Dashboard trades={trades} journalEntries={journalEntries} sessions={sessions} />} />
-        <Route path="/import" element={<Import onImport={handleImport} batches={batches} onDeleteBatch={handleDeleteBatch} onDeleteAllBatches={handleDeleteAllBatches} />} />
+        <Route path="/import" element={<Import onImport={handleImport} batches={batches} onDeleteBatch={handleDeleteBatch} onDeleteAllBatches={handleDeleteAllBatches} onBalanceSynced={handleBalanceSynced} />} />
         <Route path="/trades" element={<Trades trades={trades} journalEntries={journalEntries} onJournalUpdate={handleJournalUpdate} onDeleteTrade={handleDeleteTrade} onDeleteAll={handleDeleteAll} />} />
         <Route path="/analytics" element={<Analytics trades={trades} journalEntries={journalEntries} sessions={sessions} />} />
         <Route path="/session" element={<Session sessions={sessions} trades={trades} onSave={handleSessionSave} />} />

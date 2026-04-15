@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { parseMT5Report, parseCSV } from './store'
+import DerivSync from './DerivSync'
 
-export default function Import({ onImport, batches = [], onDeleteBatch, onDeleteAllBatches }) {
+export default function Import({ onImport, batches = [], onDeleteBatch, onDeleteAllBatches, onBalanceSynced }) {
   const [dragging, setDragging] = useState(false)
   const [preview, setPreview] = useState(null)
   const [parsing, setParsing] = useState(false)
@@ -84,6 +85,8 @@ export default function Import({ onImport, batches = [], onDeleteBatch, onDelete
           Or export as Excel and convert using the script in Scripts/mt5_to_csv.py.
         </div>
       </div>
+
+      <DerivSync onBalanceSynced={onBalanceSynced} />
 
       {/* Drop zone */}
       <div
