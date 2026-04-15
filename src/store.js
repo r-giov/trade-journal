@@ -1,3 +1,16 @@
+// Deterministic UUID from ticket + openTime — same input always gives same UUID
+function makeTradeId(ticket, openTime) {
+  const s = `${ticket}|${openTime}`
+  let n = BigInt(0)
+  for (let i = 0; i < s.length; i++) {
+    n = (n * BigInt(31) + BigInt(s.charCodeAt(i))) & BigInt('0xffffffffffffffffffffffffffffffff')
+  }
+  let h = n.toString(16).padStart(32, '0')
+  // Set UUID version 4 and variant bits
+  h = h.slice(0,12) + '4' + h.slice(13,16) + ((parseInt(h[16],16) & 3) | 8).toString(16) + h.slice(17)
+  return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20,32)}`
+}
+
 function cleanNum(str) {
   if (!str) return 0
   // Handle "1,061.70" (comma thousands separator) and "- 18.70" (spaced minus)
@@ -26,7 +39,7 @@ export function parseMT5Report(rawText) {
     if (cells.length === 14 && /^\d{4}\.\d{2}\.\d{2}/.test(vals[0])) {
       const type = vals[3]?.toLowerCase()
       if (!['buy','sell'].includes(type)) return
-      const id = `mt5-pos-${vals[1]}`
+      const id = makeTradeId(vals[1], vals[0])
       if (seen.has(id)) return
       seen.add(id)
       const profit = cleanNum(vals[10])
@@ -42,7 +55,7 @@ export function parseMT5Report(rawText) {
       else if (deal.direction === 'out') {
         const open = openStack[deal.symbol].shift()
         if (!open) return
-        const id = `mt5-${open.orderId}-${open.time.replace(/[\s:.]/g,'')}`
+        const id = makeTradeId(open.orderId, open.time)
         if (seen.has(id)) return
         seen.add(id)
         trades.push({ id, openTime:open.time, ticket:open.orderId, type:open.type, volume:open.volume, symbol:open.symbol, openPrice:open.price, closePrice:deal.price, closeTime:deal.time, sl:'', tp:'', profit:deal.profit, outcome:deal.profit>0.5?'win':deal.profit<-0.5?'loss':'be' })
@@ -131,7 +144,7 @@ export function parseCSV(text) {
     const ticket = C.ticket >= 0 ? vals[C.ticket] : String(i)
     const profit = C.profit >= 0 ? cleanNum(vals[C.profit]) : 0
 
-    const id = `csv-${ticket}-${openTime.replace(/[\s:.]/g,'')}`
+    const id = makeTradeId(ticket, openTime)
     if (seen.has(id)) continue
     seen.add(id)
 
