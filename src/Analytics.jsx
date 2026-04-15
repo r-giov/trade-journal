@@ -34,8 +34,25 @@ function tradeDuration(t) {
 
 export default function Analytics({ trades, journalEntries = {}, sessions = [] }) {
   const [activeTab, setActiveTab] = useState('overview')
+  const [startingBalance, setStartingBalance] = useState(() => {
+    const v = localStorage.getItem('tj_starting_balance')
+    return v ? parseFloat(v) : ''
+  })
+  const [balanceInput, setBalanceInput] = useState(() => localStorage.getItem('tj_starting_balance') || '')
+
+  function saveBalance(val) {
+    const n = parseFloat(val)
+    if (!isNaN(n) && n > 0) {
+      localStorage.setItem('tj_starting_balance', n)
+      setStartingBalance(n)
+    } else {
+      localStorage.removeItem('tj_starting_balance')
+      setStartingBalance('')
+    }
+  }
 
   const data = useMemo(() => {
+    const base = startingBalance || 0
     if (!trades.length) return null
     const closed = trades.filter(t => t.outcome !== 'be' || t.closePrice)
     const wins = closed.filter(t => t.outcome === 'win')
@@ -52,16 +69,17 @@ export default function Analytics({ trades, journalEntries = {}, sessions = [] }
     const expectancy = (winRate / 100 * avgWin) - ((1 - winRate / 100) * avgLoss)
     const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? 999 : 0
 
-    // Equity + drawdown
-    let peak = 0, running = 0, maxDD = 0, maxDDdollar = 0
+    // Equity + drawdown — uses starting balance if set, otherwise dollar-only
+    let peakEquity = base, running = 0, maxDD = 0, maxDDdollar = 0
     const equity = closed.map((t, i) => {
       running += t.profit
-      if (running > peak) peak = running
-      const ddPct = peak > 0 ? ((peak - running) / peak) * 100 : 0
-      const ddDollar = peak - running
+      const equity = base + running
+      if (equity > peakEquity) peakEquity = equity
+      const ddDollar = peakEquity - equity
+      const ddPct = peakEquity > 0 ? (ddDollar / peakEquity) * 100 : 0
       if (ddPct > maxDD) maxDD = ddPct
       if (ddDollar > maxDDdollar) maxDDdollar = ddDollar
-      return { i: i + 1, pnl: parseFloat(running.toFixed(2)), dd: parseFloat(ddPct.toFixed(2)) }
+      return { i: i + 1, pnl: parseFloat((base + running).toFixed(2)), dd: parseFloat(ddPct.toFixed(2)) }
     })
     const recoveryFactor = maxDDdollar > 0 ? total / maxDDdollar : 0
 
@@ -247,11 +265,11 @@ export default function Analytics({ trades, journalEntries = {}, sessions = [] }
     closed.forEach(t => {
       const d = t.openTime?.slice(0, 10)?.replace(/\./g, '-')
       const s = sessionMap[d]
-      if (!s?.pre_emotion) return
-      if (!sessionEmoMap[s.pre_emotion]) sessionEmoMap[s.pre_emotion] = { count: 0, wins: 0, pnl: 0 }
-      sessionEmoMap[s.pre_emotion].count++
-      sessionEmoMap[s.pre_emotion].pnl += t.profit
-      if (t.outcome === 'win') sessionEmoMap[s.pre_emotion].wins++
+      if (!s?.preEmotion) return
+      if (!sessionEmoMap[s.preEmotion]) sessionEmoMap[s.preEmotion] = { count: 0, wins: 0, pnl: 0 }
+      sessionEmoMap[s.preEmotion].count++
+      sessionEmoMap[s.preEmotion].pnl += t.profit
+      if (t.outcome === 'win') sessionEmoMap[s.preEmotion].wins++
     })
     const bySessionEmotion = Object.entries(sessionEmoMap).map(([e, v]) => ({
       emotion: e, count: v.count,
@@ -266,7 +284,7 @@ export default function Analytics({ trades, journalEntries = {}, sessions = [] }
       maxWinStreak, maxLossStreak, rollingWR, tradesPerDay, tradingDays,
       bestTrade, worstTrade, byEmotion, byMistake, byGrade, bySessionEmotion,
     }
-  }, [trades, journalEntries, sessions])
+  }, [trades, journalEntries, sessions, startingBalance])
 
   if (!trades.length || !data) return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 12, textAlign: 'center' }}>
@@ -284,9 +302,23 @@ export default function Analytics({ trades, journalEntries = {}, sessions = [] }
 
   return (
     <div style={{ padding: '24px', maxWidth: 1200, margin: '0 auto' }}>
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 800, marginBottom: 4 }}>Analytics</div>
-        <div style={{ color: '#94a3b8', fontSize: 12 }}>{data.closed.length} closed trades across {data.tradingDays} trading days</div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 800, marginBottom: 4 }}>Analytics</div>
+          <div style={{ color: '#94a3b8', fontSize: 12 }}>{data.closed.length} closed trades across {data.tradingDays} trading days</div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ fontSize: 11, color: '#94a3b8', whiteSpace: 'nowrap' }}>starting balance</div>
+          <input
+            type="number" min="0" step="1" placeholder="e.g. 150"
+            value={balanceInput}
+            onChange={e => setBalanceInput(e.target.value)}
+            onBlur={e => saveBalance(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && saveBalance(e.target.value)}
+            style={{ width: 110, fontSize: 12, padding: '6px 10px' }}
+          />
+          {startingBalance && <div style={{ fontSize: 11, color: '#16a34a' }}>✓ set</div>}
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '1px solid #e2e8f0' }}>
@@ -312,7 +344,7 @@ export default function Analytics({ trades, journalEntries = {}, sessions = [] }
               { label: 'AVG WIN', value: `+${data.avgWin.toFixed(2)}`, color: '#16a34a' },
               { label: 'AVG LOSS', value: `-${data.avgLoss.toFixed(2)}`, color: '#ef4444' },
               { label: 'RISK:REWARD', value: data.rr.toFixed(2), sub: 'avg R:R' },
-              { label: 'MAX DRAWDOWN', value: `${data.maxDD.toFixed(1)}%`, color: data.maxDD > 20 ? '#ef4444' : data.maxDD > 10 ? '#d97706' : '#16a34a' },
+              { label: 'MAX DRAWDOWN', value: startingBalance ? `${data.maxDD.toFixed(1)}%` : `-$${data.maxDDdollar.toFixed(2)}`, sub: startingBalance ? `-$${data.maxDDdollar.toFixed(2)}` : 'set balance for %', color: data.maxDD > 20 ? '#ef4444' : data.maxDD > 10 ? '#d97706' : '#16a34a' },
               { label: 'RECOVERY FACTOR', value: data.recoveryFactor.toFixed(2), color: data.recoveryFactor >= 3 ? '#16a34a' : data.recoveryFactor >= 1 ? '#d97706' : '#ef4444', sub: 'profit / drawdown' },
               { label: 'WIN STREAK', value: `${data.maxWinStreak}`, sub: 'best run' },
               { label: 'LOSS STREAK', value: `${data.maxLossStreak}`, sub: 'worst run', color: data.maxLossStreak >= 5 ? '#ef4444' : '#d97706' },

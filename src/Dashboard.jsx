@@ -17,10 +17,11 @@ export default function Dashboard({ trades, journalEntries }) {
     const rr = avgLoss !== 0 ? Math.abs(avgWin / avgLoss) : 0;
 
     // equity curve
+    const base = parseFloat(localStorage.getItem('tj_starting_balance') || '0')
     let running = 0;
     const equity = trades.map((t, i) => {
       running += t.profit;
-      return { i: i + 1, pnl: parseFloat(running.toFixed(2)), date: t.openTime?.slice(0, 10) };
+      return { i: i + 1, pnl: parseFloat((base + running).toFixed(2)), date: t.openTime?.slice(0, 10) };
     });
 
     // emotion vs pnl
