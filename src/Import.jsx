@@ -128,7 +128,7 @@ export default function Import({ onImport, batches = [], onDeleteBatch }) {
                 </tr>
               </thead>
               <tbody>
-                {preview.trades.slice(0, 30).map(t => (
+                {preview.trades.map(t => (
                   <tr key={t.id} style={{ borderBottom: '1px solid var(--border)' }}>
                     <td style={{ padding: '4px 8px', color: 'var(--text3)' }}>{t.openTime?.slice(5, 16)}</td>
                     <td style={{ padding: '4px 8px' }}>{t.symbol}</td>
