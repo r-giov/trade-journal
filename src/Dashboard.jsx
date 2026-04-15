@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 const EMOTIONS = ['calm','focused','anxious','frustrated','overconfident','fearful','revenge'];
-const EMO_COLOR = { calm:'#44ff88', focused:'#4488ff', anxious:'#ffaa44', frustrated:'#ff4444', overconfident:'#ff88aa', fearful:'#aa88ff', revenge:'#ff4444' };
+const EMO_COLOR = { calm:'#16a34a', focused:'#2563eb', confident:'#0891b2', motivated:'#7c3aed', patient:'#059669', anxious:'#d97706', frustrated:'#ea580c', overconfident:'#db2777', fearful:'#9333ea', revenge:'#ef4444', impulsive:'#dc2626', distracted:'#78716c' };
 
 export default function Dashboard({ trades, journalEntries }) {
   const stats = useMemo(() => {

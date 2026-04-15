@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 
-const EMOTIONS = ['calm', 'focused', 'anxious', 'frustrated', 'overconfident', 'fearful', 'revenge']
-const EMO_COLORS = { calm: '#16a34a', focused: '#2563eb', anxious: '#d97706', frustrated: '#ea580c', overconfident: '#db2777', fearful: '#7c3aed', revenge: '#ef4444' }
+const EMOTIONS = ['calm','focused','confident','motivated','patient','anxious','frustrated','overconfident','fearful','revenge','impulsive','distracted']
+const EMO_COLORS = { calm:'#16a34a', focused:'#2563eb', confident:'#0891b2', motivated:'#7c3aed', patient:'#059669', anxious:'#d97706', frustrated:'#ea580c', overconfident:'#db2777', fearful:'#9333ea', revenge:'#ef4444', impulsive:'#dc2626', distracted:'#78716c' }
 
 const CHECKLIST = [
   'I have reviewed the higher timeframe bias',

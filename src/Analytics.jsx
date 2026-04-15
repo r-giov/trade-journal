@@ -10,7 +10,7 @@ const TIP = {
   contentStyle: { background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, fontFamily: 'var(--font-mono)', fontSize: 11, boxShadow: '0 4px 12px rgba(0,0,0,0.08)' },
   labelStyle: { color: '#94a3b8' },
 }
-const EMO_COLORS = { calm: '#16a34a', focused: '#2563eb', anxious: '#d97706', frustrated: '#ea580c', overconfident: '#db2777', fearful: '#7c3aed', revenge: '#ef4444' }
+const EMO_COLORS = { calm:'#16a34a', focused:'#2563eb', confident:'#0891b2', motivated:'#7c3aed', patient:'#059669', anxious:'#d97706', frustrated:'#ea580c', overconfident:'#db2777', fearful:'#9333ea', revenge:'#ef4444', impulsive:'#dc2626', distracted:'#78716c' }
 
 function SectionTitle({ children }) {
   return <div style={{ fontSize: 10, color: '#94a3b8', letterSpacing: '.08em', marginBottom: 14 }}>{children}</div>

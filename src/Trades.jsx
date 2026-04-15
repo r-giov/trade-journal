@@ -1,8 +1,22 @@
 import { useState } from 'react'
 
-const EMOTIONS = ['calm','focused','anxious','frustrated','overconfident','fearful','revenge']
-const EMO_COLORS = { calm:'#16a34a',focused:'#2563eb',anxious:'#d97706',frustrated:'#ea580c',overconfident:'#db2777',fearful:'#7c3aed',revenge:'#ef4444' }
+const EMOTIONS = [
+  { label:'calm',         color:'#16a34a' },
+  { label:'focused',      color:'#2563eb' },
+  { label:'confident',    color:'#0891b2' },
+  { label:'motivated',    color:'#7c3aed' },
+  { label:'patient',      color:'#059669' },
+  { label:'anxious',      color:'#d97706' },
+  { label:'frustrated',   color:'#ea580c' },
+  { label:'overconfident',color:'#db2777' },
+  { label:'fearful',      color:'#9333ea' },
+  { label:'revenge',      color:'#ef4444' },
+  { label:'impulsive',    color:'#dc2626' },
+  { label:'distracted',   color:'#78716c' },
+]
+const EMO_COLORS = Object.fromEntries(EMOTIONS.map(e => [e.label, e.color]))
 const MISTAKES = ['sized up after loss','moved stop loss','entered without confirmation','ignored my rules','revenge traded','cut winner early','held loser too long','over-leveraged','FOMO entry','no trade plan']
+const POSITIVES = ['followed my plan','waited for confirmation','respected stop loss','sized correctly','patient entry','took profit at target','stayed disciplined','good risk management','trusted the setup','cut loss early']
 
 function Pill({ label, active, color, onClick }) {
   return (
@@ -19,6 +33,7 @@ function JournalPanel({ trade, entry, onChange, onClose }) {
   const e = entry || {}
   const set = (k, v) => onChange(trade.id, { ...e, [k]: v })
   const toggleMistake = m => { const cur = e.mistakes||[]; set('mistakes', cur.includes(m) ? cur.filter(x=>x!==m) : [...cur,m]) }
+  const togglePositive = p => { const cur = e.positives||[]; set('positives', cur.includes(p) ? cur.filter(x=>x!==p) : [...cur,p]) }
 
   return (
     <div style={{ background:'#f8fafc', border:'1px solid #e2e8f0', borderTop:'none', borderRadius:'0 0 10px 10px', padding:18, marginBottom:4 }}>
@@ -28,11 +43,21 @@ function JournalPanel({ trade, entry, onChange, onClose }) {
       </div>
       <div style={{ fontSize:10, color:'#94a3b8', letterSpacing:'.07em', marginBottom:7 }}>HOW WERE YOU FEELING?</div>
       <div style={{ display:'flex', flexWrap:'wrap', gap:5, marginBottom:14 }}>
-        {EMOTIONS.map(em => <Pill key={em} label={em} active={e.emotion===em} color={EMO_COLORS[em]||'#2563eb'} onClick={()=>set('emotion',em)} />)}
+        {EMOTIONS.map(em => <Pill key={em.label} label={em.label} active={e.emotion===em.label} color={em.color} onClick={()=>set('emotion',em.label)} />)}
       </div>
-      <div style={{ fontSize:10, color:'#94a3b8', letterSpacing:'.07em', marginBottom:7 }}>MISTAKES</div>
-      <div style={{ display:'flex', flexWrap:'wrap', gap:5, marginBottom:14 }}>
-        {MISTAKES.map(m => <Pill key={m} label={m} active={(e.mistakes||[]).includes(m)} color="#ef4444" onClick={()=>toggleMistake(m)} />)}
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:14 }}>
+        <div>
+          <div style={{ fontSize:10, color:'#16a34a', letterSpacing:'.07em', marginBottom:7 }}>WHAT YOU DID RIGHT</div>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
+            {POSITIVES.map(p => <Pill key={p} label={p} active={(e.positives||[]).includes(p)} color="#16a34a" onClick={()=>togglePositive(p)} />)}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize:10, color:'#ef4444', letterSpacing:'.07em', marginBottom:7 }}>MISTAKES</div>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
+            {MISTAKES.map(m => <Pill key={m} label={m} active={(e.mistakes||[]).includes(m)} color="#ef4444" onClick={()=>toggleMistake(m)} />)}
+          </div>
+        </div>
       </div>
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
         <div>

@@ -81,6 +81,7 @@ export async function getJournalEntries(userId) {
       followedRules: e.followed_rules,
       setupGrade: e.setup_grade,
       mistakes: e.mistakes || [],
+      positives: e.positives || [],
       notes: e.notes,
     }
   })
@@ -94,6 +95,7 @@ export async function upsertJournalEntry(tradeId, userId, entry) {
     followed_rules: entry.followedRules || null,
     setup_grade: entry.setupGrade || null,
     mistakes: entry.mistakes || [],
+    positives: entry.positives || [],
     notes: entry.notes || null,
     updated_at: new Date().toISOString(),
   }, { onConflict: 'trade_id,user_id' })
